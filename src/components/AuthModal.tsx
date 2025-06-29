@@ -21,9 +21,16 @@ interface AuthModalProps {
   onClose: () => void;
   mode: 'login' | 'register';
   onModeChange: (mode: 'login' | 'register') => void;
+  onAuthSuccess: (userData: { username: string; email: string }) => void;
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChange }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  mode, 
+  onModeChange, 
+  onAuthSuccess 
+}) => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -89,15 +96,19 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
       if (mode === 'login') {
         setSuccess('Connexion réussie ! Redirection...');
         setTimeout(() => {
-          onClose();
-          // Here you would typically redirect or update app state
+          onAuthSuccess({
+            username: formData.email.split('@')[0],
+            email: formData.email
+          });
         }, 1000);
       } else {
-        setSuccess('Compte créé avec succès ! Vérifiez votre email.');
+        setSuccess('Compte créé avec succès !');
         setTimeout(() => {
-          onModeChange('login');
-          setSuccess('');
-        }, 2000);
+          onAuthSuccess({
+            username: formData.username,
+            email: formData.email
+          });
+        }, 1000);
       }
     } catch (error) {
       setErrors({ general: 'Une erreur est survenue. Veuillez réessayer.' });
@@ -108,28 +119,34 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
 
   const handleSocialLogin = (provider: string) => {
     console.log(`Login with ${provider}`);
-    // Implement social login logic
+    // Simulate social login
+    setTimeout(() => {
+      onAuthSuccess({
+        username: `${provider}_user`,
+        email: `user@${provider}.com`
+      });
+    }, 1000);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
       
       {/* Modal */}
-      <div className="relative w-full max-w-md bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-md bg-black/40 backdrop-blur-xl rounded-3xl border border-cyan-500/30 shadow-2xl overflow-hidden">
         {/* Animated Background */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 left-0 w-32 h-32 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-0 w-32 h-32 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
           <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
           <div className="absolute bottom-0 left-1/2 w-32 h-32 bg-emerald-500 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
         </div>
 
         {/* Header */}
-        <div className="relative p-6 border-b border-white/20">
+        <div className="relative p-6 border-b border-cyan-500/30">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white transition-colors"
@@ -138,7 +155,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
           </button>
           
           <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-gradient-to-r from-cyan-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-cyan-500/30">
               {mode === 'login' ? (
                 <LogIn className="w-8 h-8 text-white" />
               ) : (
@@ -189,7 +206,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                     className={`w-full pl-10 pr-4 py-3 bg-white/10 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all ${
                       errors.username 
                         ? 'border-red-500 focus:ring-red-500' 
-                        : 'border-white/20 focus:ring-blue-500 focus:border-blue-500'
+                        : 'border-cyan-500/30 focus:ring-cyan-500 focus:border-cyan-500'
                     }`}
                     placeholder="Votre nom d'utilisateur"
                   />
@@ -214,7 +231,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                   className={`w-full pl-10 pr-4 py-3 bg-white/10 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all ${
                     errors.email 
                       ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-white/20 focus:ring-blue-500 focus:border-blue-500'
+                      : 'border-cyan-500/30 focus:ring-cyan-500 focus:border-cyan-500'
                   }`}
                   placeholder="votre@email.com"
                 />
@@ -238,7 +255,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                   className={`w-full pl-10 pr-12 py-3 bg-white/10 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all ${
                     errors.password 
                       ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-white/20 focus:ring-blue-500 focus:border-blue-500'
+                      : 'border-cyan-500/30 focus:ring-cyan-500 focus:border-cyan-500'
                   }`}
                   placeholder="••••••••"
                 />
@@ -270,7 +287,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
                     className={`w-full pl-10 pr-12 py-3 bg-white/10 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all ${
                       errors.confirmPassword 
                         ? 'border-red-500 focus:ring-red-500' 
-                        : 'border-white/20 focus:ring-blue-500 focus:border-blue-500'
+                        : 'border-cyan-500/30 focus:ring-cyan-500 focus:border-cyan-500'
                     }`}
                     placeholder="••••••••"
                   />
@@ -291,7 +308,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2"
+              className="w-full py-3 bg-gradient-to-r from-cyan-600 to-purple-600 text-white font-semibold rounded-lg hover:from-cyan-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2 border border-cyan-500/30"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -308,7 +325,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/20"></div>
+                <div className="w-full border-t border-cyan-500/30"></div>
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-transparent text-gray-400">Ou continuer avec</span>
@@ -318,14 +335,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
             <div className="mt-4 grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleSocialLogin('google')}
-                className="flex items-center justify-center px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white hover:bg-white/20 transition-all duration-200"
+                className="flex items-center justify-center px-4 py-2 bg-white/10 border border-cyan-500/30 rounded-lg text-white hover:bg-white/20 transition-all duration-200"
               >
                 <Chrome className="w-5 h-5 mr-2" />
                 Google
               </button>
               <button
                 onClick={() => handleSocialLogin('github')}
-                className="flex items-center justify-center px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white hover:bg-white/20 transition-all duration-200"
+                className="flex items-center justify-center px-4 py-2 bg-white/10 border border-cyan-500/30 rounded-lg text-white hover:bg-white/20 transition-all duration-200"
               >
                 <Github className="w-5 h-5 mr-2" />
                 GitHub
@@ -339,7 +356,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, mode, onModeChan
               {mode === 'login' ? "Pas encore de compte ?" : "Déjà un compte ?"}
               <button
                 onClick={() => onModeChange(mode === 'login' ? 'register' : 'login')}
-                className="ml-2 text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                className="ml-2 text-cyan-400 hover:text-cyan-300 font-semibold transition-colors"
               >
                 {mode === 'login' ? 'Inscrivez-vous' : 'Connectez-vous'}
               </button>

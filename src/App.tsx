@@ -39,6 +39,7 @@ import ApiKeyManager from './components/ApiKeyManager';
 import QuickActions from './components/QuickActions';
 import VoiceControls from './components/VoiceControls';
 import AuthModal from './components/AuthModal';
+import OpeningPage from './components/OpeningPage';
 
 interface Message {
   id: string;
@@ -61,6 +62,7 @@ interface ChatWindow {
 }
 
 function App() {
+  const [showOpeningPage, setShowOpeningPage] = useState(true);
   const [chatWindows, setChatWindows] = useState<ChatWindow[]>([
     {
       id: '1',
@@ -85,7 +87,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [showApiManager, setShowApiManager] = useState(false);
-  const [currentModel, setCurrentModel] = useState('grok-beta');
+  const [currentModel, setCurrentModel] = useState('gemini-pro');
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(2048);
   const [systemPrompt, setSystemPrompt] = useState('You are Athena AI, a brilliant, witty, and helpful AI assistant. Be engaging, creative, and professional while maintaining a fun personality.');
@@ -97,13 +99,17 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<{ username: string; email: string } | null>(null);
 
+  // Gemini API Key
+  const [geminiApiKey] = useState('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');
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const models = [
+    { id: 'gemini-pro', name: 'Gemini Pro', icon: '🧠', description: 'Google\'s most capable model' },
+    { id: 'gemini-pro-vision', name: 'Gemini Pro Vision', icon: '👁️', description: 'Multimodal AI with vision' },
     { id: 'grok-beta', name: 'Grok Beta', icon: '🚀', description: 'Witty and rebellious' },
     { id: 'qwen-2-72b', name: 'Qwen 2 72B', icon: '🧠', description: 'Powerful reasoning' },
-    { id: 'claude-3-opus', name: 'Claude 3 Opus', icon: '✨', description: 'Creative excellence' },
-    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', icon: '⚡', description: 'Lightning fast' }
+    { id: 'claude-3-opus', name: 'Claude 3 Opus', icon: '✨', description: 'Creative excellence' }
   ];
 
   const quickPrompts = [
@@ -127,8 +133,45 @@ function App() {
     adjustTextareaHeight();
   }, [inputValue]);
 
+  const callGeminiAPI = async (message: string): Promise<string> => {
+    try {
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + geminiApiKey, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `${systemPrompt}\n\nUser: ${message}`
+            }]
+          }],
+          generationConfig: {
+            temperature: temperature,
+            maxOutputTokens: maxTokens,
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.candidates[0]?.content?.parts[0]?.text || 'Sorry, I couldn\'t generate a response.';
+    } catch (error) {
+      console.error('Gemini API Error:', error);
+      return 'I\'m having trouble connecting to my AI brain right now. Please try again in a moment! 🤖';
+    }
+  };
+
   const simulateAIResponse = (userMessage: string, model: string): string => {
     const responses = {
+      'gemini-pro': [
+        "🧠 Gemini Pro here! I've analyzed your request with Google's latest AI technology. Here's my comprehensive response...",
+        "Fascinating question! Using my advanced reasoning capabilities, I can provide you with detailed insights...",
+        "Let me tap into my vast knowledge base to give you the most accurate and helpful response..."
+      ],
       'grok-beta': [
         "Well, well, well... *adjusts digital sunglasses* 😎 That's a fascinating question! Let me break this down for you with some Grok-style wit and wisdom...",
         "Ah, I see what you're getting at! *cracks digital knuckles* Time to unleash some serious AI firepower on this problem. Here's what I'm thinking...",
@@ -143,15 +186,10 @@ function App() {
         "What a delightful inquiry! ✨ I'm excited to explore this creative challenge with you. Here's my thoughtful response...",
         "This sparks so many interesting possibilities! Let me craft a response that's both insightful and engaging...",
         "I love questions like this! They allow me to blend creativity with analytical thinking. Here's what I'm envisioning..."
-      ],
-      'gpt-4-turbo': [
-        "Processing at lightning speed! ⚡ Here's a rapid-fire analysis of your request with actionable insights...",
-        "Turbo mode activated! Let me quickly synthesize the best approach for your needs...",
-        "Fast and efficient response incoming! Here's exactly what you need to know..."
       ]
     };
 
-    const modelResponses = responses[model as keyof typeof responses] || responses['grok-beta'];
+    const modelResponses = responses[model as keyof typeof responses] || responses['gemini-pro'];
     return modelResponses[Math.floor(Math.random() * modelResponses.length)];
   };
 
@@ -175,6 +213,7 @@ function App() {
         : window
     ));
 
+    const messageToSend = inputValue;
     setInputValue('');
     setIsLoading(true);
 
@@ -198,12 +237,21 @@ function App() {
         : window
     ));
 
-    // Simulate AI processing time
-    setTimeout(() => {
+    try {
+      let aiResponseContent: string;
+      
+      if (currentModel === 'gemini-pro' && geminiApiKey) {
+        aiResponseContent = await callGeminiAPI(messageToSend);
+      } else {
+        // Simulate other models
+        await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000));
+        aiResponseContent = simulateAIResponse(messageToSend, currentModel);
+      }
+
       const aiResponse: Message = {
         id: (Date.now() + 2).toString(),
         type: 'assistant',
-        content: simulateAIResponse(inputValue, currentModel),
+        content: aiResponseContent,
         timestamp: new Date()
       };
 
@@ -215,9 +263,25 @@ function App() {
             }
           : window
       ));
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        type: 'assistant',
+        content: 'Sorry, I encountered an error while processing your request. Please try again! 🤖',
+        timestamp: new Date()
+      };
 
+      setChatWindows(prev => prev.map(window => 
+        window.id === activeWindow.id 
+          ? { 
+              ...window, 
+              messages: window.messages.filter(m => !m.isTyping).concat(errorMessage)
+            }
+          : window
+      ));
+    } finally {
       setIsLoading(false);
-    }, 1500 + Math.random() * 1000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -290,42 +354,82 @@ function App() {
     setShowAuthModal(true);
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
-        <div className="absolute top-40 right-20 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-40 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
-      </div>
+  const handleEnterApp = () => {
+    setShowOpeningPage(false);
+  };
 
-      {/* Floating Particles */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2 bg-white rounded-full opacity-30 animate-float"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${3 + Math.random() * 4}s`
-            }}
-          />
-        ))}
+  if (showOpeningPage) {
+    return <OpeningPage onEnter={handleEnterApp} />;
+  }
+
+  return (
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Dynamic Cyberpunk Background */}
+      <div className="fixed inset-0 z-0">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: 'url(/pngtree-high-tech-ai-design-with-glowing-circuitry-and-data-streams-picture-image_16064011.jpg)',
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-blue-900/70 to-cyan-900/80" />
+        
+        {/* Animated Grid Overlay */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="grid-background"></div>
+        </div>
+
+        {/* Floating Data Streams */}
+        <div className="absolute inset-0 pointer-events-none">
+          {[...Array(15)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 bg-gradient-to-t from-transparent via-cyan-400 to-transparent opacity-60 animate-data-stream"
+              style={{
+                left: `${Math.random() * 100}%`,
+                height: `${100 + Math.random() * 200}px`,
+                animationDelay: `${Math.random() * 5}s`,
+                animationDuration: `${2 + Math.random() * 3}s`
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Circuit Patterns */}
+        <div className="absolute inset-0 opacity-30">
+          <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="circuit" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+                <path d="M10 10h80v80h-80z" fill="none" stroke="url(#circuitGradient)" strokeWidth="0.5"/>
+                <circle cx="10" cy="10" r="2" fill="#00ffff" opacity="0.6"/>
+                <circle cx="90" cy="90" r="2" fill="#ff00ff" opacity="0.6"/>
+                <path d="M10 50h80M50 10v80" stroke="url(#circuitGradient)" strokeWidth="0.3"/>
+              </pattern>
+              <linearGradient id="circuitGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#00ffff" stopOpacity="0.3"/>
+                <stop offset="50%" stopColor="#0080ff" stopOpacity="0.5"/>
+                <stop offset="100%" stopColor="#ff00ff" stopOpacity="0.3"/>
+              </linearGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#circuit)"/>
+          </svg>
+        </div>
       </div>
 
       {/* Header */}
-      <header className="relative z-50 bg-black/20 backdrop-blur-xl border-b border-white/10">
+      <header className="relative z-50 bg-black/30 backdrop-blur-xl border-b border-cyan-500/30">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center space-x-4">
             <AthenaLogo size="md" showText={true} />
             <div className="flex items-center space-x-2">
-              <div className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-medium">
+              <div className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-medium border border-emerald-500/30">
                 {chatWindows.length} Active Chats
               </div>
-              <div className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium">
+              <div className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium border border-blue-500/30">
                 {currentModel}
+              </div>
+              <div className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm font-medium border border-purple-500/30">
+                Gemini Powered
               </div>
             </div>
           </div>
@@ -335,7 +439,7 @@ function App() {
               <>
                 <button
                   onClick={() => openAuthModal('login')}
-                  className="px-4 py-2 text-white hover:text-blue-400 transition-colors flex items-center space-x-2"
+                  className="px-4 py-2 text-white hover:text-cyan-400 transition-colors flex items-center space-x-2"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>Connexion</span>
@@ -343,7 +447,7 @@ function App() {
                 
                 <button
                   onClick={() => openAuthModal('register')}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 transform hover:scale-105"
+                  className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-purple-600 text-white rounded-lg hover:from-cyan-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 transform hover:scale-105 border border-cyan-500/30"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span>Inscription</span>
@@ -351,8 +455,8 @@ function App() {
               </>
             ) : (
               <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2 px-3 py-2 bg-white/10 rounded-lg">
-                  <User className="w-4 h-4 text-blue-400" />
+                <div className="flex items-center space-x-2 px-3 py-2 bg-white/10 rounded-lg border border-cyan-500/30">
+                  <User className="w-4 h-4 text-cyan-400" />
                   <span className="text-white text-sm">{user?.username}</span>
                 </div>
                 <button
@@ -366,7 +470,7 @@ function App() {
 
             <button
               onClick={createNewChat}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-blue-600 text-white rounded-lg hover:from-emerald-700 hover:to-blue-700 transition-all duration-200 flex items-center space-x-2"
+              className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-lg hover:from-emerald-700 hover:to-cyan-700 transition-all duration-200 flex items-center space-x-2 border border-emerald-500/30"
             >
               <MessageSquare className="w-4 h-4" />
               <span>New Chat</span>
@@ -388,6 +492,7 @@ function App() {
         onClose={() => setShowAuthModal(false)}
         mode={authMode}
         onModeChange={setAuthMode}
+        onAuthSuccess={handleAuthSuccess}
       />
 
       {/* API Manager Sidebar */}
@@ -419,7 +524,7 @@ function App() {
       ))}
 
       {/* Main Input Area */}
-      <div className={`fixed bottom-0 left-0 right-0 z-40 bg-black/20 backdrop-blur-xl border-t border-white/10 transition-all duration-300 ${
+      <div className={`fixed bottom-0 left-0 right-0 z-40 bg-black/30 backdrop-blur-xl border-t border-cyan-500/30 transition-all duration-300 ${
         isChatMinimized ? 'transform translate-y-full' : 'transform translate-y-0'
       }`}>
         <div className="max-w-4xl mx-auto p-6">
@@ -430,16 +535,16 @@ function App() {
           />
 
           {/* Input Area */}
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 shadow-2xl">
+          <div className="bg-black/40 backdrop-blur-lg rounded-2xl border border-cyan-500/30 shadow-2xl">
             <div className="flex items-end p-4 space-x-4">
               <div className="flex space-x-2">
-                <button className="p-2 text-gray-400 hover:text-white transition-colors">
+                <button className="p-2 text-gray-400 hover:text-cyan-400 transition-colors">
                   <Paperclip className="w-5 h-5" />
                 </button>
-                <button className="p-2 text-gray-400 hover:text-white transition-colors">
+                <button className="p-2 text-gray-400 hover:text-cyan-400 transition-colors">
                   <Image className="w-5 h-5" />
                 </button>
-                <button className="p-2 text-gray-400 hover:text-white transition-colors">
+                <button className="p-2 text-gray-400 hover:text-cyan-400 transition-colors">
                   <Code className="w-5 h-5" />
                 </button>
               </div>
@@ -466,7 +571,7 @@ function App() {
               <button
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim() || isLoading}
-                className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+                className="p-3 bg-gradient-to-r from-cyan-600 to-purple-600 text-white rounded-xl hover:from-cyan-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 border border-cyan-500/30"
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -482,7 +587,7 @@ function App() {
                 <select
                   value={currentModel}
                   onChange={(e) => setCurrentModel(e.target.value)}
-                  className="bg-white/10 text-white rounded-lg px-3 py-1 border border-white/20"
+                  className="bg-white/10 text-white rounded-lg px-3 py-1 border border-cyan-500/30"
                 >
                   {models.map(model => (
                     <option key={model.id} value={model.id} className="bg-gray-800">
@@ -491,6 +596,7 @@ function App() {
                   ))}
                 </select>
                 <span className="text-gray-400">Temperature: {temperature}</span>
+                <span className="text-cyan-400">🔑 Gemini API Connected</span>
               </div>
               <div className="flex items-center space-x-2 text-gray-400">
                 <Zap className="w-4 h-4" />
@@ -504,7 +610,7 @@ function App() {
       {/* Floating Minimize/Maximize Button */}
       <button
         onClick={toggleChatInterface}
-        className={`fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-110 ${
+        className={`fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-cyan-600 to-purple-600 text-white rounded-full shadow-2xl hover:from-cyan-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-110 border border-cyan-500/30 ${
           isChatMinimized ? 'animate-pulse' : ''
         }`}
         title={isChatMinimized ? 'Afficher le chat' : 'Masquer le chat'}
@@ -518,12 +624,12 @@ function App() {
 
       {/* Minimized Chat Indicator */}
       {isChatMinimized && (
-        <div className="fixed bottom-20 right-6 z-40 bg-black/40 backdrop-blur-lg rounded-2xl border border-white/20 shadow-xl p-4">
+        <div className="fixed bottom-20 right-6 z-40 bg-black/40 backdrop-blur-lg rounded-2xl border border-cyan-500/30 shadow-xl p-4">
           <div className="flex items-center space-x-3">
-            <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
+            <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>
             <div>
               <div className="text-white font-semibold text-lg tracking-wide">
-                <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent font-bold">
+                <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent font-bold">
                   ATHENA AI
                 </span>
               </div>
