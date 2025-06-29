@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Zap } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 interface QuickActionsProps {
   prompts: Array<{
@@ -11,31 +11,31 @@ interface QuickActionsProps {
 }
 
 const QuickActions: React.FC<QuickActionsProps> = ({ prompts, onPromptSelect }) => {
-  const categories = [...new Set(prompts.map(p => p.category))];
+  // Réduire à seulement 4 prompts les plus populaires
+  const topPrompts = prompts.slice(0, 4);
 
   return (
-    <div className="mb-4">
-      <div className="flex items-center space-x-2 mb-3">
-        <Sparkles className="w-4 h-4 text-blue-400" />
-        <span className="text-sm font-medium text-gray-300">Quick Actions</span>
+    <div className="mb-3">
+      <div className="flex items-center space-x-2 mb-2">
+        <Sparkles className="w-3 h-3 text-blue-400" />
+        <span className="text-xs font-medium text-gray-400">Quick Start</span>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-        {prompts.map((prompt, index) => (
+      <div className="grid grid-cols-2 gap-2">
+        {topPrompts.map((prompt, index) => (
           <button
             key={index}
             onClick={() => onPromptSelect(prompt.text)}
-            className="group p-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-200 text-left"
+            className="group p-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all duration-200 text-left"
           >
-            <div className="flex items-center space-x-2 mb-1">
-              <span className="text-lg group-hover:scale-110 transition-transform">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm group-hover:scale-110 transition-transform">
                 {prompt.icon}
               </span>
-              <span className="text-xs text-blue-400 font-medium">{prompt.category}</span>
+              <span className="text-xs text-gray-300 group-hover:text-white transition-colors truncate">
+                {prompt.text}
+              </span>
             </div>
-            <p className="text-sm text-gray-300 group-hover:text-white transition-colors">
-              {prompt.text}
-            </p>
           </button>
         ))}
       </div>
