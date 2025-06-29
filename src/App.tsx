@@ -26,7 +26,9 @@ import {
   Play,
   Pause,
   Volume2,
-  VolumeX
+  VolumeX,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import AthenaLogo from './components/AthenaLogo';
 import ChatWindow from './components/ChatWindow';
@@ -83,6 +85,7 @@ function App() {
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(2048);
   const [systemPrompt, setSystemPrompt] = useState('You are Athena AI, a brilliant, witty, and helpful AI assistant. Be engaging, creative, and professional while maintaining a fun personality.');
+  const [isChatMinimized, setIsChatMinimized] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -257,6 +260,10 @@ function App() {
     ));
   };
 
+  const toggleChatInterface = () => {
+    setIsChatMinimized(!isChatMinimized);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       {/* Animated Background */}
@@ -345,7 +352,9 @@ function App() {
       ))}
 
       {/* Main Input Area */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-black/20 backdrop-blur-xl border-t border-white/10">
+      <div className={`fixed bottom-0 left-0 right-0 z-40 bg-black/20 backdrop-blur-xl border-t border-white/10 transition-all duration-300 ${
+        isChatMinimized ? 'transform translate-y-full' : 'transform translate-y-0'
+      }`}>
         <div className="max-w-4xl mx-auto p-6">
           {/* Quick Actions */}
           <QuickActions 
@@ -424,6 +433,38 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* Floating Minimize/Maximize Button */}
+      <button
+        onClick={toggleChatInterface}
+        className={`fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-110 ${
+          isChatMinimized ? 'animate-pulse' : ''
+        }`}
+        title={isChatMinimized ? 'Afficher le chat' : 'Masquer le chat'}
+      >
+        {isChatMinimized ? (
+          <ChevronUp className="w-6 h-6" />
+        ) : (
+          <ChevronDown className="w-6 h-6" />
+        )}
+      </button>
+
+      {/* Minimized Chat Indicator */}
+      {isChatMinimized && (
+        <div className="fixed bottom-20 right-6 z-40 bg-black/40 backdrop-blur-lg rounded-2xl border border-white/20 shadow-xl p-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
+            <div>
+              <div className="text-white font-semibold text-lg tracking-wide">
+                <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent font-bold">
+                  ATHENA AI
+                </span>
+              </div>
+              <div className="text-gray-400 text-sm">Chat minimisé • Cliquez pour ouvrir</div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

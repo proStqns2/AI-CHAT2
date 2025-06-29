@@ -46,10 +46,12 @@ const AthenaLogo: React.FC<AthenaLogoProps> = ({ size = 'md', showText = true })
       
       {showText && (
         <div className="flex flex-col">
-          <h1 className={`${textSizeClasses[size]} font-semibold text-slate-900 leading-tight`}>
-            Athena AI
+          <h1 className={`${textSizeClasses[size]} font-bold leading-tight`}>
+            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent tracking-wide">
+              ATHENA AI
+            </span>
           </h1>
-          <div className="flex items-center space-x-1 text-xs text-slate-500">
+          <div className="flex items-center space-x-1 text-xs text-gray-400">
             <Circle className="w-2 h-2 fill-current text-green-400" />
             <span>Active</span>
           </div>
