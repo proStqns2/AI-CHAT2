@@ -71,7 +71,7 @@ function App() {
         {
           id: '1',
           type: 'assistant',
-          content: "🚀 Welcome to Athena AI! I'm your advanced neural intelligence system powered by Gemini Pro. I'm here to assist you with anything from creative writing to complex problem-solving. What incredible project shall we tackle together today?",
+          content: "🚀 Welcome to Athena AI! I'm your advanced neural intelligence system powered by Google Gemini. I'm here to assist you with anything from creative writing to complex problem-solving. What incredible project shall we tackle together today?",
           timestamp: new Date(),
           reactions: ['🚀', '💡', '⚡']
         }
@@ -99,8 +99,8 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<{ username: string; email: string } | null>(null);
 
-  // Gemini API Key - Votre clé API fournie
-  const GEMINI_API_KEY = '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';
+  // Google Gemini API Key - Votre nouvelle clé API
+  const GOOGLE_API_KEY = 'AIzaSyA1up6Y2jwgc7y273969mrC0dvDG4YkZ74';
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -133,9 +133,9 @@ function App() {
     adjustTextareaHeight();
   }, [inputValue]);
 
-  const callGeminiAPI = async (message: string): Promise<string> => {
+  const callGoogleGeminiAPI = async (message: string): Promise<string> => {
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GOOGLE_API_KEY}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -183,10 +183,10 @@ function App() {
       if (data.candidates && data.candidates[0] && data.candidates[0].content) {
         return data.candidates[0].content.parts[0].text;
       } else {
-        throw new Error('No valid response from Gemini API');
+        throw new Error('No valid response from Google Gemini API');
       }
     } catch (error) {
-      console.error('Gemini API Error:', error);
+      console.error('Google Gemini API Error:', error);
       return `🤖 I'm experiencing some technical difficulties connecting to my neural core. This could be due to:\n\n• Network connectivity issues\n• API rate limits\n• Temporary service disruption\n\nPlease try again in a moment. In the meantime, I'm still here to help with any questions you might have!`;
     }
   };
@@ -266,8 +266,8 @@ function App() {
     try {
       let aiResponseContent: string;
       
-      if (currentModel === 'gemini-pro' && GEMINI_API_KEY) {
-        aiResponseContent = await callGeminiAPI(messageToSend);
+      if (currentModel === 'gemini-pro' && GOOGLE_API_KEY) {
+        aiResponseContent = await callGoogleGeminiAPI(messageToSend);
       } else {
         // Simulate other models
         await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000));
@@ -455,7 +455,7 @@ function App() {
                 {currentModel}
               </div>
               <div className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm font-medium border border-purple-500/30">
-                🧠 Gemini Core Active
+                🧠 Google Gemini Active
               </div>
             </div>
           </div>
@@ -624,7 +624,7 @@ function App() {
                 <span className="text-gray-400">Temperature: {temperature}</span>
                 <span className="text-cyan-400 flex items-center space-x-1">
                   <Brain className="w-4 h-4" />
-                  <span>Gemini API Connected</span>
+                  <span>Google Gemini Connected</span>
                 </span>
               </div>
               <div className="flex items-center space-x-2 text-gray-400">
