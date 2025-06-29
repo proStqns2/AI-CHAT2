@@ -28,13 +28,17 @@ import {
   Volume2,
   VolumeX,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  LogIn,
+  UserPlus,
+  User
 } from 'lucide-react';
 import AthenaLogo from './components/AthenaLogo';
 import ChatWindow from './components/ChatWindow';
 import ApiKeyManager from './components/ApiKeyManager';
 import QuickActions from './components/QuickActions';
 import VoiceControls from './components/VoiceControls';
+import AuthModal from './components/AuthModal';
 
 interface Message {
   id: string;
@@ -86,6 +90,12 @@ function App() {
   const [maxTokens, setMaxTokens] = useState(2048);
   const [systemPrompt, setSystemPrompt] = useState('You are Athena AI, a brilliant, witty, and helpful AI assistant. Be engaging, creative, and professional while maintaining a fun personality.');
   const [isChatMinimized, setIsChatMinimized] = useState(false);
+  
+  // Auth states
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<{ username: string; email: string } | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -264,6 +274,22 @@ function App() {
     setIsChatMinimized(!isChatMinimized);
   };
 
+  const handleAuthSuccess = (userData: { username: string; email: string }) => {
+    setIsAuthenticated(true);
+    setUser(userData);
+    setShowAuthModal(false);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUser(null);
+  };
+
+  const openAuthModal = (mode: 'login' | 'register') => {
+    setAuthMode(mode);
+    setShowAuthModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       {/* Animated Background */}
@@ -305,9 +331,42 @@ function App() {
           </div>
 
           <div className="flex items-center space-x-3">
+            {!isAuthenticated ? (
+              <>
+                <button
+                  onClick={() => openAuthModal('login')}
+                  className="px-4 py-2 text-white hover:text-blue-400 transition-colors flex items-center space-x-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Connexion</span>
+                </button>
+                
+                <button
+                  onClick={() => openAuthModal('register')}
+                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 transform hover:scale-105"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Inscription</span>
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 px-3 py-2 bg-white/10 rounded-lg">
+                  <User className="w-4 h-4 text-blue-400" />
+                  <span className="text-white text-sm">{user?.username}</span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-2 text-gray-400 hover:text-white transition-colors"
+                >
+                  Déconnexion
+                </button>
+              </div>
+            )}
+
             <button
               onClick={createNewChat}
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2"
+              className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-blue-600 text-white rounded-lg hover:from-emerald-700 hover:to-blue-700 transition-all duration-200 flex items-center space-x-2"
             >
               <MessageSquare className="w-4 h-4" />
               <span>New Chat</span>
@@ -322,6 +381,14 @@ function App() {
           </div>
         </div>
       </header>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        mode={authMode}
+        onModeChange={setAuthMode}
+      />
 
       {/* API Manager Sidebar */}
       {showApiManager && (
