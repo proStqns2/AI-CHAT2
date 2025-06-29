@@ -71,9 +71,9 @@ function App() {
         {
           id: '1',
           type: 'assistant',
-          content: "Hey there! 👋 I'm Athena AI - your brilliant, witty, and incredibly capable AI assistant. Think of me as your digital companion who's always ready to help, learn, and maybe crack a joke or two! What amazing thing shall we work on together today?",
+          content: "🚀 Welcome to Athena AI! I'm your advanced neural intelligence system powered by Gemini Pro. I'm here to assist you with anything from creative writing to complex problem-solving. What incredible project shall we tackle together today?",
           timestamp: new Date(),
-          reactions: ['🚀', '💡']
+          reactions: ['🚀', '💡', '⚡']
         }
       ],
       isActive: true,
@@ -90,7 +90,7 @@ function App() {
   const [currentModel, setCurrentModel] = useState('gemini-pro');
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(2048);
-  const [systemPrompt, setSystemPrompt] = useState('You are Athena AI, a brilliant, witty, and helpful AI assistant. Be engaging, creative, and professional while maintaining a fun personality.');
+  const [systemPrompt, setSystemPrompt] = useState('You are Athena AI, a brilliant, witty, and helpful AI assistant powered by advanced neural networks. Be engaging, creative, and professional while maintaining a dynamic personality. Provide detailed, insightful responses that showcase your intelligence and capabilities.');
   const [isChatMinimized, setIsChatMinimized] = useState(false);
   
   // Auth states
@@ -99,8 +99,8 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<{ username: string; email: string } | null>(null);
 
-  // Gemini API Key
-  const [geminiApiKey] = useState('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');
+  // Gemini API Key - Votre clé API fournie
+  const GEMINI_API_KEY = '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';
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -113,12 +113,12 @@ function App() {
   ];
 
   const quickPrompts = [
-    { icon: '💡', text: 'Brainstorm creative ideas', category: 'Creative' },
-    { icon: '📊', text: 'Analyze data and trends', category: 'Analysis' },
+    { icon: '💡', text: 'Brainstorm innovative ideas', category: 'Creative' },
+    { icon: '📊', text: 'Analyze complex data patterns', category: 'Analysis' },
     { icon: '✍️', text: 'Write compelling content', category: 'Writing' },
-    { icon: '🔧', text: 'Debug and fix code', category: 'Coding' },
+    { icon: '🔧', text: 'Debug and optimize code', category: 'Coding' },
     { icon: '🎨', text: 'Design something beautiful', category: 'Design' },
-    { icon: '🚀', text: 'Plan a project launch', category: 'Strategy' }
+    { icon: '🚀', text: 'Plan strategic initiatives', category: 'Strategy' }
   ];
 
   const adjustTextareaHeight = () => {
@@ -135,7 +135,7 @@ function App() {
 
   const callGeminiAPI = async (message: string): Promise<string> => {
     try {
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + geminiApiKey, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -149,43 +149,69 @@ function App() {
           generationConfig: {
             temperature: temperature,
             maxOutputTokens: maxTokens,
-          }
+            topP: 0.8,
+            topK: 40
+          },
+          safetySettings: [
+            {
+              category: "HARM_CATEGORY_HARASSMENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_HATE_SPEECH",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            }
+          ]
         })
       });
 
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(`API Error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
 
       const data = await response.json();
-      return data.candidates[0]?.content?.parts[0]?.text || 'Sorry, I couldn\'t generate a response.';
+      
+      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+        return data.candidates[0].content.parts[0].text;
+      } else {
+        throw new Error('No valid response from Gemini API');
+      }
     } catch (error) {
       console.error('Gemini API Error:', error);
-      return 'I\'m having trouble connecting to my AI brain right now. Please try again in a moment! 🤖';
+      return `🤖 I'm experiencing some technical difficulties connecting to my neural core. This could be due to:\n\n• Network connectivity issues\n• API rate limits\n• Temporary service disruption\n\nPlease try again in a moment. In the meantime, I'm still here to help with any questions you might have!`;
     }
   };
 
   const simulateAIResponse = (userMessage: string, model: string): string => {
     const responses = {
       'gemini-pro': [
-        "🧠 Gemini Pro here! I've analyzed your request with Google's latest AI technology. Here's my comprehensive response...",
-        "Fascinating question! Using my advanced reasoning capabilities, I can provide you with detailed insights...",
-        "Let me tap into my vast knowledge base to give you the most accurate and helpful response..."
+        "🧠 Gemini Pro neural networks activated! Processing your request through advanced quantum algorithms...",
+        "⚡ Fascinating query! My neural pathways are analyzing multiple dimensions of this problem...",
+        "🚀 Excellent question! Let me tap into my vast knowledge matrix to provide you with comprehensive insights..."
       ],
       'grok-beta': [
-        "Well, well, well... *adjusts digital sunglasses* 😎 That's a fascinating question! Let me break this down for you with some Grok-style wit and wisdom...",
-        "Ah, I see what you're getting at! *cracks digital knuckles* Time to unleash some serious AI firepower on this problem. Here's what I'm thinking...",
-        "Hold onto your hat! 🎩 This is where things get interesting. Let me dive deep into this with my rebellious AI brain..."
+        "Well, well, well... *adjusts digital sunglasses* 😎 That's a fascinating question! Let me break this down with some Grok-style wit and wisdom...",
+        "Ah, I see what you're getting at! *cracks digital knuckles* Time to unleash some serious AI firepower on this problem...",
+        "Hold onto your hat! 🎩 This is where things get interesting. Let me dive deep with my rebellious AI brain..."
       ],
       'qwen-2-72b': [
-        "Excellent question! Let me apply advanced reasoning to provide you with a comprehensive analysis. Based on my understanding...",
-        "I'll approach this systematically using multi-step reasoning. Here's my detailed breakdown of the situation...",
-        "This requires careful consideration of multiple factors. Allow me to walk you through my analytical process..."
+        "🔬 Excellent question! Applying advanced reasoning protocols to provide comprehensive analysis...",
+        "📊 I'll approach this systematically using multi-step reasoning. Here's my detailed breakdown...",
+        "🧮 This requires careful consideration of multiple factors. Allow me to walk you through my analytical process..."
       ],
       'claude-3-opus': [
-        "What a delightful inquiry! ✨ I'm excited to explore this creative challenge with you. Here's my thoughtful response...",
-        "This sparks so many interesting possibilities! Let me craft a response that's both insightful and engaging...",
-        "I love questions like this! They allow me to blend creativity with analytical thinking. Here's what I'm envisioning..."
+        "✨ What a delightful inquiry! I'm excited to explore this creative challenge with you...",
+        "🎨 This sparks so many interesting possibilities! Let me craft a response that's both insightful and engaging...",
+        "💫 I love questions like this! They allow me to blend creativity with analytical thinking..."
       ]
     };
 
@@ -240,7 +266,7 @@ function App() {
     try {
       let aiResponseContent: string;
       
-      if (currentModel === 'gemini-pro' && geminiApiKey) {
+      if (currentModel === 'gemini-pro' && GEMINI_API_KEY) {
         aiResponseContent = await callGeminiAPI(messageToSend);
       } else {
         // Simulate other models
@@ -267,7 +293,7 @@ function App() {
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
         type: 'assistant',
-        content: 'Sorry, I encountered an error while processing your request. Please try again! 🤖',
+        content: '🚨 Neural core malfunction detected! Please try again in a moment while I recalibrate my systems. 🤖',
         timestamp: new Date()
       };
 
@@ -294,12 +320,12 @@ function App() {
   const createNewChat = () => {
     const newChat: ChatWindow = {
       id: Date.now().toString(),
-      title: `Chat ${chatWindows.length + 1}`,
+      title: `Neural Session ${chatWindows.length + 1}`,
       messages: [
         {
           id: Date.now().toString(),
           type: 'assistant',
-          content: "Fresh start! 🌟 I'm ready for our new conversation. What shall we explore together?",
+          content: "🌟 New neural session initiated! I'm ready for our next intellectual adventure. What fascinating challenge shall we explore together?",
           timestamp: new Date()
         }
       ],
@@ -369,7 +395,7 @@ function App() {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: 'url(/pngtree-high-tech-ai-design-with-glowing-circuitry-and-data-streams-picture-image_16064011.jpg)',
+            backgroundImage: 'url(/files_5730368-1751235139013-images (3).jpg)',
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-blue-900/70 to-cyan-900/80" />
@@ -423,13 +449,13 @@ function App() {
             <AthenaLogo size="md" showText={true} />
             <div className="flex items-center space-x-2">
               <div className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-medium border border-emerald-500/30">
-                {chatWindows.length} Active Chats
+                {chatWindows.length} Neural Sessions
               </div>
               <div className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium border border-blue-500/30">
                 {currentModel}
               </div>
               <div className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm font-medium border border-purple-500/30">
-                Gemini Powered
+                🧠 Gemini Core Active
               </div>
             </div>
           </div>
@@ -473,7 +499,7 @@ function App() {
               className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-lg hover:from-emerald-700 hover:to-cyan-700 transition-all duration-200 flex items-center space-x-2 border border-emerald-500/30"
             >
               <MessageSquare className="w-4 h-4" />
-              <span>New Chat</span>
+              <span>New Session</span>
             </button>
             
             <button
@@ -596,7 +622,10 @@ function App() {
                   ))}
                 </select>
                 <span className="text-gray-400">Temperature: {temperature}</span>
-                <span className="text-cyan-400">🔑 Gemini API Connected</span>
+                <span className="text-cyan-400 flex items-center space-x-1">
+                  <Brain className="w-4 h-4" />
+                  <span>Gemini API Connected</span>
+                </span>
               </div>
               <div className="flex items-center space-x-2 text-gray-400">
                 <Zap className="w-4 h-4" />
@@ -633,7 +662,7 @@ function App() {
                   ATHENA AI
                 </span>
               </div>
-              <div className="text-gray-400 text-sm">Chat minimisé • Cliquez pour ouvrir</div>
+              <div className="text-gray-400 text-sm">Neural Core Active • Click to expand</div>
             </div>
           </div>
         </div>
